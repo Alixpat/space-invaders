@@ -40,6 +40,9 @@ Une fenêtre de jeu doit s'ouvrir avec du son. Si c'est le cas, tout est prêt.
 
 (ou simplement `python jeu.py` si le venv est activé).
 
+La fenêtre est redimensionnable : étire-la ou agrandis-la, l'image suit en
+gardant ses proportions.
+
 ## Commandes
 
 | Touche                    | Action                       |

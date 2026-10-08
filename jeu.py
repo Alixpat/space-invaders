@@ -389,11 +389,8 @@ class Bunker:
 # --- Jeu -----------------------------------------------------------------
 class Game:
     def __init__(self):
-        self.window = pygame.display.get_surface()
         self.screen = pygame.Surface((W, H))
-        self.scanlines = pygame.Surface((WIN_W, WIN_H), pygame.SRCALPHA)
-        for y in range(SY - 1, WIN_H, SY):
-            self.scanlines.fill((0, 0, 0, 80), (0, y, WIN_W, 1))
+        self.scanlines = None
         self.crt = True
 
         self.sfx = build_sounds()
@@ -673,10 +670,30 @@ class Game:
         else:
             self.draw_field()
 
-        pygame.transform.scale(s, (WIN_W, WIN_H), self.window)
+        # La fenêtre est redimensionnable : on agrandit l'image en gardant ses
+        # proportions et on centre le tout avec des bandes noires.
+        window = pygame.display.get_surface()
+        win_w, win_h = window.get_size()
+        k = min(win_w / WIN_W, win_h / WIN_H)
+        dest = pygame.Rect(0, 0, round(WIN_W * k), round(WIN_H * k))
+        dest.center = (win_w // 2, win_h // 2)
+        window.fill(BLACK)
+        window.blit(pygame.transform.scale(s, dest.size), dest)
         if self.crt:
-            self.window.blit(self.scanlines, (0, 0))
+            window.blit(self.get_scanlines(dest.size), dest)
         pygame.display.flip()
+
+    def get_scanlines(self, size):
+        # Une ligne sombre en bas de chaque rangée de pixels logiques, recalculée
+        # seulement quand la taille de l'image change.
+        if self.scanlines is None or self.scanlines.get_size() != size:
+            w, h = size
+            thick = max(1, round(h / H / SY))
+            self.scanlines = pygame.Surface(size, pygame.SRCALPHA)
+            for y in range(H):
+                bottom = round((y + 1) * h / H)
+                self.scanlines.fill((0, 0, 0, 80), (0, bottom - thick, w, thick))
+        return self.scanlines
 
     def draw_title(self):
         s = self.screen
@@ -740,7 +757,7 @@ def main():
     pygame.mixer.pre_init(22050, -16, 1, 512)
     pygame.init()
     pygame.display.set_caption("Space Invaders")
-    pygame.display.set_mode((WIN_W, WIN_H))
+    pygame.display.set_mode((WIN_W, WIN_H), pygame.RESIZABLE)
     game = Game()
     clock = pygame.time.Clock()
 
